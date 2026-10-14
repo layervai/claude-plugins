@@ -1,8 +1,8 @@
 {
   "name": "qurl",
   "displayName": "qURL",
-  "version": "1.0.0",
-  "description": "Share an app running on your machine privately from Claude Code with qURL: no deploy, no account, no API key.",
+  "version": "1.1.0",
+  "description": "Share an app running on your machine privately from Claude Code with qURL, by email invitation, email sign-in, review, approved passkeys or contract: no deploy, no account, no API key.",
   "author": {
     "name": "LayerV",
     "url": "https://layerv.ai"
@@ -10,5 +10,5 @@
   "homepage": "https://qurl.link",
   "repository": "https://github.com/layervai/claude-plugins",
   "license": "MIT",
-  "keywords": ["qurl", "share", "localhost", "private", "crid"]
+  "keywords": ["qurl", "share", "localhost", "private", "crid", "invite", "passkey"]
 }
