@@ -38,8 +38,7 @@ session's context.
 Email verification proves control of a mailbox, not who someone is. The modes
 need a `qurl` CLI whose `qurl publish --help` lists `--access`, and a qURL
 service with private access turned on. Where either is missing, Claude says so
-and keeps the app private; apps can still be shared privately with a
-six-digit code per person.
+and shares nothing; it never falls back to a public share or six-digit codes.
 
 ## Updates
 
