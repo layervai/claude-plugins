@@ -13,9 +13,11 @@ Code: no deploy, no account, no API key, no signup. In a Claude Code session:
 ```
 
 Then ask Claude to share what you're working on ("share my app with
-ana@example.com"), or type `/qurl:share`. When someone asks for access, they
-give you a six-digit code; `/qurl:approve <code>` lets them in. Nobody gets in
-by a name.
+ana@example.com"), or type `/qurl:share`. Claude picks the private access mode
+from what you ask for: email invitations, email sign-in, review, approved
+passkeys or a contract with your backend. `/qurl:approve` decides a waiting
+request and `/qurl:access` invites more people or removes someone. Nobody gets
+in by a name.
 
 The plugin ships the [qURL agent skill](https://layerv.ai/skills/qurl/SKILL.md)
 on disk, so Claude never works from a summary of it. Details: [plugins/qurl](plugins/qurl).
