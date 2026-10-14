@@ -1,0 +1,99 @@
+name: check
+
+# Three checks on the qURL plugin:
+#   skill     the bundled skill is the served one, byte for byte (daily too,
+#             because the served file changes without a commit here)
+#   validate  Claude Code's own validator accepts the marketplace and plugin
+#   version   a pull request that changes the plugin raises its version, or
+#             people who installed it never get the change
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '37 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Pinned. Take a newer release only when it is at least 14 days old.
+  CLAUDE_CODE_VERSION: '2.1.236'
+  SKILL_URL: https://layerv.ai/skills/qurl/SKILL.md
+  BUNDLED: plugins/qurl/skills/qurl/SKILL.md
+
+jobs:
+  skill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: The bundled skill is the served one, byte for byte
+        run: |
+          set -euo pipefail
+          served="$(mktemp)"
+          curl -fsSL --proto '=https' --retry 4 --retry-delay 5 --retry-all-errors \
+            --max-filesize 1048576 "$SKILL_URL" -o "$served"
+          if ! cmp -s "$served" "$BUNDLED"; then
+            echo "::error file=$BUNDLED::The bundled skill differs from $SKILL_URL. Fix: curl -fsSL $SKILL_URL -o $BUNDLED, then raise version in plugins/qurl/.claude-plugin/plugin.json."
+            diff <(head -c 2000 "$served") <(head -c 2000 "$BUNDLED") || true
+            exit 1
+          fi
+          echo "The bundled skill matches $SKILL_URL ($(wc -c < "$BUNDLED") bytes)."
+
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+      - name: Install Claude Code
+        run: npm install --global --ignore-scripts "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}"
+      - name: Validate the marketplace and the plugin
+        run: |
+          set -euo pipefail
+          claude plugin validate --strict .
+          claude plugin validate --strict plugins/qurl
+      - name: The plugin version is semver
+        run: |
+          set -euo pipefail
+          version="$(jq -er .version plugins/qurl/.claude-plugin/plugin.json)"
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::version $version is not MAJOR.MINOR.PATCH"; exit 1; }
+
+  version:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: A change to the plugin raises its version
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          base="$(git merge-base "$BASE_SHA" HEAD)"
+          if git diff --quiet "$base" HEAD -- plugins/qurl; then
+            echo "The plugin did not change."
+            exit 0
+          fi
+          old="$(git show "$base:plugins/qurl/.claude-plugin/plugin.json" 2>/dev/null | jq -er .version || echo 0.0.0)"
+          new="$(jq -er .version plugins/qurl/.claude-plugin/plugin.json)"
+          if [ "$(printf '%s\n%s\n' "$old" "$new" | sort -V | tail -n1)" != "$new" ] || [ "$old" = "$new" ]; then
+            echo "::error file=plugins/qurl/.claude-plugin/plugin.json::The plugin changed but its version did not go up ($old -> $new). Installed copies update only when the version changes."
+            exit 1
+          fi
+          echo "Plugin version $old -> $new."
