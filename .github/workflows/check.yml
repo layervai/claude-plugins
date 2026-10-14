@@ -59,7 +59,13 @@ jobs:
         with:
           node-version: '22'
       - name: Install Claude Code
-        run: npm install --global --ignore-scripts "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}"
+        # Scripts stay off for everything else; the package's own installer
+        # then fetches its native binary, which the CLI needs to run.
+        run: |
+          set -euo pipefail
+          npm install --global --ignore-scripts "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}"
+          node "$(npm root --global)/@anthropic-ai/claude-code/install.cjs"
+          claude --version
       - name: Validate the marketplace and the plugin
         run: |
           set -euo pipefail
