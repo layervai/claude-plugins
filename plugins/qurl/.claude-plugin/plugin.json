@@ -1,7 +1,7 @@
 {
   "name": "qurl",
   "displayName": "qURL",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Share an app running on your machine privately from Claude Code with qURL, by email invitation, email sign-in, review, approved passkeys or contract: no deploy, no account, no API key.",
   "author": {
     "name": "LayerV",
