@@ -1,3 +1,6 @@
 # The plugins ship the served qURL skill with a reviewed directory patch; a daily check compares
 # the two, so no checkout may convert its line endings.
 plugins/*/skills/qurl/SKILL.md -text
+
+# Unified diffs require a space on blank context lines.
+scripts/directory-skill.patch -whitespace
