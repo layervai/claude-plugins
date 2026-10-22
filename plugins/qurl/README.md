@@ -50,15 +50,23 @@ marketplaces don't update on their own by default: run
 ## Keeping the bundled skill current (maintainers)
 
 `skills/qurl/SKILL.md` is a copy of the skill served at
-<https://layerv.ai/skills/qurl/SKILL.md>, byte for byte. The served file is the
+<https://layerv.ai/skills/qurl/SKILL.md>, with the reviewed `scripts/directory-skill.patch` applied. The patch removes
+runtime instruction downloads for directory compliance. The served file is the
 source of truth: never edit the copy here. The `check` workflow compares the two every day
 and fails while they differ. To
 update it:
 
-1. Copy the served file over the bundled one:
+1. Copy the served file and policy reference, apply `scripts/directory-skill.patch`
+   in a temporary directory, then copy both patched files into the plugin:
 
    ```bash
-   curl -fsSL https://layerv.ai/skills/qurl/SKILL.md -o plugins/qurl/skills/qurl/SKILL.md
+   source_dir="$(mktemp -d)"
+   mkdir -p "$source_dir/references"
+   curl -fsSL https://layerv.ai/skills/qurl/SKILL.md -o "$source_dir/SKILL.md"
+   curl -fsSL https://layerv.ai/skills/qurl/references/access-policies.md -o "$source_dir/references/access-policies.md"
+   git -C "$source_dir" apply < scripts/directory-skill.patch &&
+     cp "$source_dir/SKILL.md" plugins/qurl/skills/qurl/SKILL.md &&
+     cp "$source_dir/references/access-policies.md" plugins/qurl/skills/qurl/references/access-policies.md
    ```
 
 2. Raise `version` in `.claude-plugin/plugin.json` in the same PR, or people who
@@ -73,3 +81,30 @@ update it:
 4. Run `claude plugin validate --strict .` from the repository root.
 
 Any other change to the plugin's files also needs a new version to reach people.
+
+## Requirements and data handling
+
+Sharing a local app requires local command execution on the computer running
+that app. The plugin installs the qURL CLI from LayerV's official GitHub
+release when needed. The computer and app must stay running while shared.
+A cloud session cannot reach an app on your computer through this plugin alone.
+
+The main skill and its private policy reference are bundled. Updates to those instructions arrive through plugin releases; the installed
+plugin does not download behavioral instructions at runtime. CLI setup
+downloads the official installer from `raw.githubusercontent.com/layervai/`
+and release binaries and checksums from `github.com/layervai/qurl-integrations`.
+
+The CLI creates a device identity on the publisher computer. It sends resource
+and access-management requests to LayerV. Email modes send the recipient email
+addresses the publisher supplies; verification and access records are processed
+by LayerV. Email capture and review disclose the consumer's verified email to
+the publisher. Public app names must contain no secrets or recipient details.
+Access records, including verified email addresses and enrolled invitations,
+can be retained longer than 30 days; they have no fixed automatic deletion
+deadline. Expiry of access does not mean deletion of its records.
+Access links and invitation tokens are credentials; do not put them in public
+messages or logs. The plugin has no MCP server.
+
+Read LayerV's [privacy policy](https://layerv.ai/privacy) and
+[terms](https://layerv.ai/terms). For support, use
+[LayerV support](https://layerv.ai/contact).
