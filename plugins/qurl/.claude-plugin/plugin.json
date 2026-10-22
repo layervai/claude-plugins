@@ -1,7 +1,7 @@
 {
   "name": "qurl",
   "displayName": "qURL",
-  "version": "1.1.3",
+  "version": "1.1.4",
   "description": "Share an app running on your machine privately from Claude Code with qURL, by email invitation, email sign-in, review, approved passkeys or contract: no deploy, no account, no API key.",
   "author": {
     "name": "LayerV",
@@ -10,5 +10,13 @@
   "homepage": "https://qurl.link",
   "repository": "https://github.com/layervai/claude-plugins",
   "license": "MIT",
-  "keywords": ["qurl", "share", "localhost", "private", "crid", "invite", "passkey"]
+  "keywords": [
+    "qurl",
+    "share",
+    "localhost",
+    "private",
+    "crid",
+    "invite",
+    "passkey"
+  ]
 }

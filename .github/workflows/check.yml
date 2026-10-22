@@ -41,6 +41,10 @@ jobs:
           served="$(mktemp)"
           curl -fsSL --proto '=https' --retry 4 --retry-delay 5 --retry-all-errors \
             --max-filesize 1048576 "$SKILL_URL" -o "$served"
+          reference="$(mktemp)"
+          curl -fsSL --proto '=https' --retry 4 --retry-delay 5 --retry-all-errors \
+            --max-filesize 1048576 https://layerv.ai/skills/qurl/references/access-policies.md -o "$reference"
+          cmp "$reference" plugins/qurl/skills/qurl/references/access-policies.md
           if ! cmp -s "$served" "$BUNDLED"; then
             echo "::error file=$BUNDLED::The bundled skill differs from $SKILL_URL. Fix: curl -fsSL $SKILL_URL -o $BUNDLED, then raise version in plugins/qurl/.claude-plugin/plugin.json."
             diff <(head -c 2000 "$served") <(head -c 2000 "$BUNDLED") || true
